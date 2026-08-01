@@ -19,9 +19,15 @@ public class CipherViewModel : INotifyPropertyChanged
     private SolidColorBrush _statusBrush = new(Color.FromRgb(0xD6, 0xD6, 0xD6));
     private bool _isBusy;
 
+    public event Action? PasswordsClearRequested;
+
     public CipherViewModel()
     {
-        EncryptCommand = new RelayCommand(async _ => await ExecuteAsync(), _ => CanExecute());
+        EncryptCommand = new RelayCommand(async _ =>
+        {
+            try { await ExecuteAsync(); }
+            catch (Exception ex) { SetStatus($"Unexpected error: {ex.Message}", true); }
+        }, _ => CanExecute());
         CopyCommand = new RelayCommand(_ => CopyResult(), _ => !string.IsNullOrEmpty(ResultText));
         ClearCommand = new RelayCommand(_ => Clear());
         SetEncryptModeCommand = new RelayCommand(_ => IsEncryptMode = true);
@@ -38,7 +44,7 @@ public class CipherViewModel : INotifyPropertyChanged
                 OnPropertyChanged(nameof(IsDecryptMode));
                 OnPropertyChanged(nameof(ActionLabel));
                 OnPropertyChanged(nameof(ConfirmPasswordVisible));
-                OnPropertyChanged(nameof(InputHint));
+                ConfirmPassword = string.Empty;
                 StatusMessage = string.Empty;
             }
         }
@@ -47,7 +53,6 @@ public class CipherViewModel : INotifyPropertyChanged
     public bool IsDecryptMode => !_isEncryptMode;
     public string ActionLabel => _isEncryptMode ? "ENCRYPT" : "DECRYPT";
     public Visibility ConfirmPasswordVisible => _isEncryptMode ? Visibility.Visible : Visibility.Collapsed;
-    public string InputHint => _isEncryptMode ? "Enter plaintext to encrypt..." : "Paste encrypted message...";
 
     public string Password
     {
@@ -183,8 +188,15 @@ public class CipherViewModel : INotifyPropertyChanged
 
     private void CopyResult()
     {
-        Clipboard.SetText(ResultText);
-        SetStatus("Copied to clipboard.", false);
+        try
+        {
+            Clipboard.SetText(ResultText);
+            SetStatus("Copied to clipboard.", false);
+        }
+        catch (Exception)
+        {
+            SetStatus("Clipboard is in use by another application.", true);
+        }
     }
 
     private void Clear()
@@ -194,6 +206,7 @@ public class CipherViewModel : INotifyPropertyChanged
         InputText = string.Empty;
         ResultText = string.Empty;
         StatusMessage = string.Empty;
+        PasswordsClearRequested?.Invoke();
     }
 
     private void SetStatus(string message, bool isError)

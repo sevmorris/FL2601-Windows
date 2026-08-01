@@ -29,39 +29,40 @@ public static class CipherEngine
         byte[] plaintextBytes = Encoding.UTF8.GetBytes(plaintext);
         byte[] salt = RandomNumberGenerator.GetBytes(SaltSize);
         byte[] nonce = RandomNumberGenerator.GetBytes(NonceSize);
+        byte[] key = DeriveKey(password, salt, iterations);
 
-        // Derive key via PBKDF2-HMAC-SHA256
-        byte[] key = Rfc2898DeriveBytes.Pbkdf2(
-            Encoding.UTF8.GetBytes(password),
-            salt,
-            iterations,
-            HashAlgorithmName.SHA256,
-            KeySize);
+        try
+        {
+            // Build header (AAD)
+            byte[] header = new byte[HeaderSize];
+            Magic.CopyTo(header, 0);
+            header[4] = Version;
+            header[5] = KdfId;
+            BinaryPrimitives.WriteUInt32BigEndian(header.AsSpan(6, 4), (uint)iterations);
 
-        // Build header (AAD)
-        byte[] header = new byte[HeaderSize];
-        Magic.CopyTo(header, 0);
-        header[4] = Version;
-        header[5] = KdfId;
-        BinaryPrimitives.WriteUInt32BigEndian(header.AsSpan(6, 4), (uint)iterations);
+            // Encrypt with AES-256-GCM
+            byte[] ciphertext = new byte[plaintextBytes.Length];
+            byte[] tag = new byte[TagSize];
 
-        // Encrypt with AES-256-GCM
-        byte[] ciphertext = new byte[plaintextBytes.Length];
-        byte[] tag = new byte[TagSize];
+            using var aes = new AesGcm(key, TagSize);
+            aes.Encrypt(nonce, plaintextBytes, ciphertext, tag, header);
 
-        using var aes = new AesGcm(key, TagSize);
-        aes.Encrypt(nonce, plaintextBytes, ciphertext, tag, header);
+            // Assemble: header | salt | nonce | ciphertext | tag
+            byte[] payload = new byte[HeaderSize + SaltSize + NonceSize + ciphertext.Length + TagSize];
+            int offset = 0;
+            header.CopyTo(payload, offset); offset += HeaderSize;
+            salt.CopyTo(payload, offset); offset += SaltSize;
+            nonce.CopyTo(payload, offset); offset += NonceSize;
+            ciphertext.CopyTo(payload, offset); offset += ciphertext.Length;
+            tag.CopyTo(payload, offset);
 
-        // Assemble: header | salt | nonce | ciphertext | tag
-        byte[] payload = new byte[HeaderSize + SaltSize + NonceSize + ciphertext.Length + TagSize];
-        int offset = 0;
-        header.CopyTo(payload, offset); offset += HeaderSize;
-        salt.CopyTo(payload, offset); offset += SaltSize;
-        nonce.CopyTo(payload, offset); offset += NonceSize;
-        ciphertext.CopyTo(payload, offset); offset += ciphertext.Length;
-        tag.CopyTo(payload, offset);
-
-        return Convert.ToBase64String(payload);
+            return Convert.ToBase64String(payload);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(key);
+            CryptographicOperations.ZeroMemory(plaintextBytes);
+        }
     }
 
     public static string Decrypt(string base64Payload, string password)
@@ -106,27 +107,42 @@ public static class CipherEngine
         byte[] ciphertext = payload[ciphertextStart..(ciphertextStart + ciphertextLen)];
         byte[] tag = payload[(payload.Length - TagSize)..];
 
-        // Derive key
-        byte[] key = Rfc2898DeriveBytes.Pbkdf2(
-            Encoding.UTF8.GetBytes(password),
-            salt,
-            iterations,
-            HashAlgorithmName.SHA256,
-            KeySize);
-
-        // Decrypt
+        byte[] key = DeriveKey(password, salt, iterations);
         byte[] plaintextBytes = new byte[ciphertextLen];
-        using var aes = new AesGcm(key, TagSize);
+
         try
         {
-            aes.Decrypt(nonce, ciphertext, tag, plaintextBytes, header);
-        }
-        catch (CryptographicException)
-        {
-            throw new CryptographicException("Decryption failed — wrong password or corrupted data.");
-        }
+            using var aes = new AesGcm(key, TagSize);
+            try
+            {
+                aes.Decrypt(nonce, ciphertext, tag, plaintextBytes, header);
+            }
+            catch (CryptographicException)
+            {
+                CryptographicOperations.ZeroMemory(plaintextBytes);
+                throw new CryptographicException("Decryption failed — wrong password or corrupted data.");
+            }
 
-        return Encoding.UTF8.GetString(plaintextBytes);
+            return Encoding.UTF8.GetString(plaintextBytes);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(key);
+            CryptographicOperations.ZeroMemory(plaintextBytes);
+        }
+    }
+
+    private static byte[] DeriveKey(string password, byte[] salt, int iterations)
+    {
+        byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+        try
+        {
+            return Rfc2898DeriveBytes.Pbkdf2(passwordBytes, salt, iterations, HashAlgorithmName.SHA256, KeySize);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(passwordBytes);
+        }
     }
 
     private static void ValidateIterations(int iterations)
