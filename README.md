@@ -23,10 +23,8 @@ base64 back in with the same passphrase to recover the original.
 
 ## Install
 
-Download `FL2601-v1.0.0-win-x64.zip` from the
-[Releases](../../releases/latest) page, extract it anywhere, and run
-`FL2601.exe`. The build is self-contained — no .NET runtime installation
-needed.
+Download `FL2601.exe` from the [Releases](../../releases/latest) page and run
+it. The build is self-contained — no installation or .NET runtime needed.
 
 Requires Windows 10 or later (x64).
 
@@ -145,12 +143,11 @@ dotnet build
 To produce a self-contained single-file release:
 
 ```bash
-dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
+dotnet publish -c Release
 ```
 
-The output goes to `FL2601/bin/Release/net8.0-windows/win-x64/publish/`.
-WPF requires a few native DLLs alongside the executable — zip the entire
-publish folder for distribution.
+The output is a single `FL2601.exe` with all dependencies (including WPF's
+native libraries) embedded — no other files needed for distribution.
 
 ## License
 
