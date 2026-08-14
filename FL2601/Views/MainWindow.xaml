@@ -2,228 +2,258 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:FL2601.ViewModels"
-        Title="FL2601" Width="640" Height="620"
+        Title="FL2601" Width="780" Height="900"
         MinWidth="640" MinHeight="620"
-        Background="#0A0A0A"
+        Background="{StaticResource Background}"
         WindowStartupLocation="CenterScreen">
 
     <Window.DataContext>
         <vm:CipherViewModel />
     </Window.DataContext>
 
-    <Window.Resources>
-        <!-- Base text style -->
-        <Style x:Key="MonoText" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="Courier New" />
-            <Setter Property="Foreground" Value="#D6D6D6" />
-            <Setter Property="FontSize" Value="13" />
-        </Style>
+    <!-- Still scrollable, so shrinking the window past the point where
+         everything fits degrades to scrolling rather than clipping. -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Border x:Name="Panel" MaxWidth="800" Margin="16,32"
+                Background="{StaticResource Panel}"
+                BorderBrush="{StaticResource Border}"
+                BorderThickness="1"
+                Padding="32">
+            <Border.Effect>
+                <DropShadowEffect Color="Black" Opacity="0.5" BlurRadius="15"
+                                  ShadowDepth="10" Direction="270" />
+            </Border.Effect>
 
-        <!-- TextBox style -->
-        <Style x:Key="DarkTextBox" TargetType="TextBox">
-            <Setter Property="FontFamily" Value="Courier New" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Background" Value="#1A1A1A" />
-            <Setter Property="Foreground" Value="#D6D6D6" />
-            <Setter Property="CaretBrush" Value="#33FF33" />
-            <Setter Property="BorderBrush" Value="#333333" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="6,4" />
-            <Setter Property="SelectionBrush" Value="#1A6B1A" />
-        </Style>
+            <StackPanel>
 
-        <!-- PasswordBox style -->
-        <Style x:Key="DarkPasswordBox" TargetType="PasswordBox">
-            <Setter Property="FontFamily" Value="Courier New" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Background" Value="#1A1A1A" />
-            <Setter Property="Foreground" Value="#D6D6D6" />
-            <Setter Property="CaretBrush" Value="#33FF33" />
-            <Setter Property="BorderBrush" Value="#333333" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="6,4" />
-        </Style>
+                <!-- ==================== Header ==================== -->
 
-        <!-- Button style -->
-        <Style x:Key="ActionButton" TargetType="Button">
-            <Setter Property="FontFamily" Value="Courier New" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Background" Value="#1A6B1A" />
-            <Setter Property="Foreground" Value="#33FF33" />
-            <Setter Property="BorderBrush" Value="#33FF33" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="16,8" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="3"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#237A23" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#0F4F0F" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="border" Property="Background" Value="#222222" />
-                                <Setter TargetName="border" Property="BorderBrush" Value="#444444" />
-                                <Setter Property="Foreground" Value="#555555" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+                <StackPanel Margin="0,0,0,32">
+                    <TextBlock Text="FL2601 — CIPHER TOOL"
+                               FontFamily="{StaticResource Mono}"
+                               FontSize="{StaticResource SizeTitle}"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource Green}" />
+                    <Rectangle Height="1" Margin="0,8,0,0" Fill="{StaticResource GreenLo}" />
+                </StackPanel>
 
-        <!-- Tab button style -->
-        <Style x:Key="TabButton" TargetType="Button">
-            <Setter Property="FontFamily" Value="Courier New" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="#666666" />
-            <Setter Property="BorderThickness" Value="0,0,0,2" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="Padding" Value="20,8" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+                <!-- ==================== Tabs ====================
+                     Mode selection sits above the fields it governs. The
+                     confirm field appears only when encrypting, so anything
+                     below the tabs shifts when the mode changes — keeping the
+                     tabs above that point means the control you just clicked
+                     stays put. -->
 
-        <!-- Secondary button style -->
-        <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
-            <Setter Property="Background" Value="#222222" />
-            <Setter Property="Foreground" Value="#999999" />
-            <Setter Property="BorderBrush" Value="#444444" />
-        </Style>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
+                    <RadioButton Style="{StaticResource TabItem}" GroupName="Mode"
+                                 Content="Encrypt"
+                                 IsChecked="{Binding IsEncryptMode, Mode=TwoWay}" />
+                    <RadioButton Style="{StaticResource TabItem}" GroupName="Mode"
+                                 Content="Decrypt"
+                                 IsChecked="{Binding IsDecryptMode, Mode=TwoWay}" />
+                </StackPanel>
 
-        <BooleanToVisibilityConverter x:Key="BoolToVis" />
-    </Window.Resources>
+                <!-- ==================== Passphrase ==================== -->
 
-    <Grid Margin="0">
-        <Border Background="#111111" CornerRadius="0">
-            <DockPanel>
-                <!-- Title bar area -->
-                <Border DockPanel.Dock="Top" Background="#0A0A0A" Padding="16,12">
-                    <TextBlock Text="FL2601" FontFamily="Courier New" FontSize="18"
-                               FontWeight="Bold" Foreground="#33FF33" />
+                <TextBlock Text="ACCESS PASSPHRASE" Style="{StaticResource FieldLabel}"
+                           Margin="0,0,0,8" />
+                <Border Style="{StaticResource FieldChrome}">
+                    <Grid>
+                        <PasswordBox x:Name="PassphraseBox"
+                                     Style="{StaticResource TerminalPasswordBox}"
+                                     PasswordChanged="PassphraseBox_PasswordChanged" />
+                        <TextBlock Text="Enter passphrase..."
+                                   Style="{StaticResource FieldPrompt}"
+                                   Visibility="{Binding PassphrasePromptVisibility}" />
+                    </Grid>
                 </Border>
 
-                <!-- Tab bar -->
-                <Border DockPanel.Dock="Top" Background="#0A0A0A" Padding="16,0,16,0"
-                        BorderBrush="#222222" BorderThickness="0,0,0,1">
-                    <StackPanel Orientation="Horizontal">
-                        <Button Content="ENCRYPT"
-                                Command="{Binding SetEncryptModeCommand}">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource TabButton}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsEncryptMode}" Value="True">
-                                            <Setter Property="Foreground" Value="#33FF33" />
-                                            <Setter Property="BorderBrush" Value="#33FF33" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                        <Button Content="DECRYPT"
-                                Command="{Binding SetDecryptModeCommand}">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource TabButton}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsDecryptMode}" Value="True">
-                                            <Setter Property="Foreground" Value="#33FF33" />
-                                            <Setter Property="BorderBrush" Value="#33FF33" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                    </StackPanel>
-                </Border>
+                <!-- Belongs to the field above, not floating between the two. -->
+                <Grid Height="14" Margin="0,8,0,0" Visibility="{Binding StrengthVisibility}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                <!-- Status bar at bottom -->
-                <Border DockPanel.Dock="Bottom" Background="#0A0A0A" Padding="16,8"
-                        BorderBrush="#222222" BorderThickness="0,1,0,0">
-                    <TextBlock FontFamily="Courier New" FontSize="12"
-                               Text="{Binding StatusMessage}"
-                               Foreground="{Binding StatusBrush}" />
-                </Border>
+                    <Grid Grid.Column="0" Height="2" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="{Binding StrengthFilledWidth}" />
+                            <ColumnDefinition Width="{Binding StrengthRemainingWidth}" />
+                        </Grid.ColumnDefinitions>
+                        <Rectangle Grid.Column="0" Fill="{Binding StrengthBrush}" />
+                        <Rectangle Grid.Column="1" Fill="{Binding StrengthTrackBrush}" />
+                    </Grid>
 
-                <!-- Main content -->
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="16,12">
-                        <!-- Password -->
-                        <TextBlock Text="PASSWORD" Style="{StaticResource MonoText}"
-                                   Foreground="#999999" FontSize="11" Margin="0,0,0,4" />
-                        <PasswordBox x:Name="PasswordBox" Style="{StaticResource DarkPasswordBox}"
-                                     PasswordChanged="PasswordBox_PasswordChanged" />
+                    <TextBlock Grid.Column="1" Text="{Binding StrengthReadout}"
+                               Style="{StaticResource Micro}"
+                               Foreground="{Binding StrengthBrush}"
+                               VerticalAlignment="Center" />
+                </Grid>
 
-                        <!-- Confirm Password (encrypt mode only) -->
-                        <StackPanel Visibility="{Binding ConfirmPasswordVisible}" Margin="0,10,0,0">
-                            <TextBlock Text="CONFIRM PASSWORD" Style="{StaticResource MonoText}"
-                                       Foreground="#999999" FontSize="11" Margin="0,0,0,4" />
-                            <PasswordBox x:Name="ConfirmPasswordBox" Style="{StaticResource DarkPasswordBox}"
-                                         PasswordChanged="ConfirmPasswordBox_PasswordChanged" />
-                        </StackPanel>
+                <!-- ==================== Confirm ==================== -->
 
-                        <!-- Input -->
-                        <TextBlock Text="INPUT" Style="{StaticResource MonoText}"
-                                   Foreground="#999999" FontSize="11" Margin="0,14,0,4" />
-                        <TextBox Style="{StaticResource DarkTextBox}"
+                <StackPanel Margin="0,24,0,0" Visibility="{Binding ConfirmationVisibility}">
+                    <Grid Margin="0,0,0,8">
+                        <TextBlock Text="CONFIRM PASSPHRASE" Style="{StaticResource FieldLabel}" />
+                        <TextBlock Text="{Binding ConfirmationText}"
+                                   Foreground="{Binding ConfirmationBrush}"
+                                   FontFamily="{StaticResource Mono}"
+                                   FontSize="{StaticResource SizeLabel}"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                    </Grid>
+                    <Border Style="{StaticResource FieldChrome}">
+                        <Grid>
+                            <PasswordBox x:Name="ConfirmPassphraseBox"
+                                         Style="{StaticResource TerminalPasswordBox}"
+                                         PasswordChanged="ConfirmPassphraseBox_PasswordChanged" />
+                            <TextBlock Text="Re-enter passphrase..."
+                                       Style="{StaticResource FieldPrompt}"
+                                       Visibility="{Binding ConfirmPromptVisibility}" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
+                <!-- ==================== Input ==================== -->
+
+                <Grid Margin="0,24,0,8">
+                    <TextBlock Text="{Binding InputLabel}" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Text="{Binding InputCounterText}" Style="{StaticResource Micro}"
+                               HorizontalAlignment="Right" />
+                </Grid>
+                <Border Style="{StaticResource FieldChrome}">
+                    <Grid>
+                        <TextBox Style="{StaticResource TerminalTextBox}"
                                  Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"
+                                 MinHeight="200"
                                  AcceptsReturn="True" TextWrapping="Wrap"
-                                 VerticalScrollBarVisibility="Auto"
-                                 Height="120" />
+                                 VerticalScrollBarVisibility="Auto" />
+                        <TextBlock Text="{Binding InputPrompt}"
+                                   Style="{StaticResource FieldPrompt}"
+                                   Visibility="{Binding InputPromptVisibility}" />
+                    </Grid>
+                </Border>
 
-                        <!-- Buttons -->
-                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Left">
-                            <Button Content="{Binding ActionLabel}"
-                                    Style="{StaticResource ActionButton}"
-                                    Command="{Binding EncryptCommand}" />
-                            <Button Content="COPY" Style="{StaticResource SecondaryButton}"
-                                    Command="{Binding CopyCommand}" Margin="8,0,0,0" />
-                            <Button Content="CLEAR" Style="{StaticResource SecondaryButton}"
-                                    Command="{Binding ClearCommand}" Margin="8,0,0,0" />
-                        </StackPanel>
+                <!-- ==================== Actions ==================== -->
 
-                        <!-- Busy indicator -->
-                        <TextBlock Text="Processing..." Foreground="#33FF33"
-                                   FontFamily="Courier New" FontSize="12" Margin="0,8,0,0"
-                                   Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" />
+                <StackPanel Orientation="Horizontal" Margin="0,24,0,0">
+                    <Button Content="{Binding ActionLabel}"
+                            Style="{StaticResource PrimaryButton}"
+                            Command="{Binding ProcessCommand}" />
+                    <Button Content="CLEAR" Margin="16,0,0,0"
+                            Style="{StaticResource SecondaryButton}"
+                            Command="{Binding ClearCommand}" />
+                    <ProgressBar Style="{StaticResource ProcessingBar}" Margin="16,0,0,0"
+                                 Visibility="{Binding ProcessingVisibility}" />
+                </StackPanel>
 
-                        <!-- Result -->
-                        <TextBlock Text="RESULT" Style="{StaticResource MonoText}"
-                                   Foreground="#999999" FontSize="11" Margin="0,14,0,4" />
-                        <TextBox Style="{StaticResource DarkTextBox}"
-                                 Text="{Binding ResultText, Mode=OneWay}"
-                                 IsReadOnly="True" AcceptsReturn="True"
-                                 TextWrapping="Wrap"
-                                 VerticalScrollBarVisibility="Auto"
-                                 Height="140" />
+                <!-- ==================== Result ==================== -->
+
+                <Grid Margin="0,32,0,8">
+                    <TextBlock Text="RESULT" Style="{StaticResource FieldLabel}" />
+                    <Button Content="{Binding CopyLabel}"
+                            Style="{StaticResource CompactSecondaryButton}"
+                            Command="{Binding CopyCommand}"
+                            HorizontalAlignment="Right"
+                            Visibility="{Binding ResultVisibility}" />
+                </Grid>
+
+                <Border Background="{StaticResource ResultBackground}"
+                        BorderBrush="{StaticResource GreenLo}"
+                        BorderThickness="1" Padding="16"
+                        Visibility="{Binding ResultVisibility}">
+                    <TextBox Style="{StaticResource ResultTextBox}"
+                             Text="{Binding Result, Mode=OneWay}"
+                             MaxHeight="300" VerticalScrollBarVisibility="Auto" />
+                </Border>
+
+                <!-- Always present. Before there is a result it shows a waiting
+                     prompt, so the space reads as a terminal at rest rather
+                     than a gap in the layout. -->
+                <Border Background="{StaticResource ResultBackground}"
+                        BorderBrush="{StaticResource Border}"
+                        BorderThickness="1" Padding="16"
+                        Visibility="{Binding IdleVisibility}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="awaiting input"
+                                   FontFamily="{StaticResource Mono}"
+                                   FontSize="{StaticResource SizeResult}"
+                                   Foreground="{StaticResource InactiveTab}" />
+                        <Rectangle Width="9" Height="16" Margin="5,0,0,0"
+                                   Fill="{StaticResource GreenLo}"
+                                   VerticalAlignment="Center">
+                            <Rectangle.Style>
+                                <Style TargetType="Rectangle">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding AnimateCursor}" Value="True">
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard RepeatBehavior="Forever">
+                                                        <DoubleAnimationUsingKeyFrames
+                                                            Storyboard.TargetProperty="Opacity"
+                                                            Duration="0:0:1.12">
+                                                            <DiscreteDoubleKeyFrame KeyTime="0:0:0" Value="1" />
+                                                            <DiscreteDoubleKeyFrame KeyTime="0:0:0.56" Value="0" />
+                                                        </DoubleAnimationUsingKeyFrames>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Rectangle.Style>
+                        </Rectangle>
                     </StackPanel>
-                </ScrollViewer>
-            </DockPanel>
+                </Border>
+
+                <!-- ==================== Payload map ====================
+                     Two segments rather than five. Splitting out header, salt,
+                     nonce and tag would be unreadable the moment a message
+                     exceeds a few hundred bytes. Grouping them also states
+                     something truer: everything except the ciphertext is public
+                     by design. -->
+
+                <StackPanel Margin="0,12,0,0" Visibility="{Binding PayloadVisibility}">
+                    <Grid Height="28">
+                        <Grid.ColumnDefinitions>
+                            <!-- Drawn to true scale; the minimums take over only
+                                 when a segment's real share would round to a
+                                 sliver too narrow to read. -->
+                            <ColumnDefinition Width="{Binding PublicWidth}" MinWidth="76" />
+                            <ColumnDefinition Width="{Binding CiphertextWidth}" MinWidth="76" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Style="{StaticResource PayloadSegment}">
+                            <Grid ClipToBounds="True">
+                                <Rectangle Fill="{StaticResource Hatch}" />
+                                <TextBlock Text="{Binding PublicSegmentText}"
+                                           Style="{StaticResource PayloadSegmentText}" />
+                            </Grid>
+                        </Border>
+                        <Border Grid.Column="1" Style="{StaticResource PayloadSegment}">
+                            <TextBlock Text="{Binding CiphertextSegmentText}"
+                                       Style="{StaticResource PayloadSegmentText}" />
+                        </Border>
+                    </Grid>
+
+                    <TextBlock Text="{Binding PayloadSummary}" Style="{StaticResource Micro}"
+                               TextWrapping="Wrap" Margin="0,6,0,0" />
+                </StackPanel>
+
+                <!-- ==================== Status ==================== -->
+
+                <TextBlock Text="{Binding StatusMessage}"
+                           Foreground="{Binding StatusBrush}"
+                           FontFamily="{StaticResource Mono}"
+                           FontSize="{StaticResource SizeResult}"
+                           MinHeight="19" Margin="0,16,0,0" TextWrapping="Wrap" />
+
+                <!-- Read from the format constant rather than hardcoded, so the
+                     copy cannot drift from what the app actually does. -->
+                <TextBlock Text="{Binding InstructionsText}"
+                           Style="{StaticResource Instructions}" Margin="0,24,0,0" />
+
+            </StackPanel>
         </Border>
-    </Grid>
+    </ScrollViewer>
 </Window>

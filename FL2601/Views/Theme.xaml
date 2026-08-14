@@ -1,0 +1,65 @@
+<!--
+    The app's palette. Deliberately dark-only — the phosphor-terminal look is
+    the design, not a color scheme, so there is no light variant.
+
+    Greys lifted from the original stylesheet's values. Against the #111 panel
+    the inactive tab was at 2.5:1 and the footnote at 3.3:1, both under the
+    4.5:1 needed for body text; they now sit at 5.5:1 and 4.7:1. Field outlines
+    went from 1.2:1 to 1.6:1 — still quiet, but actually visible.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <SolidColorBrush x:Key="Green" Color="#33FF33" />
+    <SolidColorBrush x:Key="GreenHi" Color="#99FF99" />
+    <SolidColorBrush x:Key="GreenLo" Color="#1A6B1A" />
+    <SolidColorBrush x:Key="Background" Color="#0A0A0A" />
+    <SolidColorBrush x:Key="Panel" Color="#111111" />
+    <SolidColorBrush x:Key="InputBackground" Color="#000000" />
+    <SolidColorBrush x:Key="ResultBackground" Color="#050505" />
+    <SolidColorBrush x:Key="Error" Color="#FF4444" />
+
+    <!-- Amber for the middle band of the strength meter. Red and green alone
+         would force every passphrase into pass or fail, and most sit between. -->
+    <SolidColorBrush x:Key="Caution" Color="#E0A02A" />
+
+    <!-- Fill for the payload map's segments, lifted off the panel enough to
+         read as a distinct surface. -->
+    <SolidColorBrush x:Key="PanelRaised" Color="#1A1F18" />
+
+    <SolidColorBrush x:Key="Border" Color="#383838" />
+    <SolidColorBrush x:Key="Text" Color="#D6D6D6" />
+    <SolidColorBrush x:Key="InactiveTab" Color="#8A8A8A" />
+    <SolidColorBrush x:Key="Footnote" Color="#7E7E7E" />
+
+    <!-- Disabled primary-button text: the inactive grey at 60%. -->
+    <SolidColorBrush x:Key="DisabledText" Color="#998A8A8A" />
+
+    <!-- The stylesheet asks for Courier New, which ships with Windows. -->
+    <FontFamily x:Key="Mono">Courier New</FontFamily>
+
+    <!-- 1rem in the stylesheet == 16 units here. -->
+    <sys:Double x:Key="SizeTitle">19</sys:Double>
+    <sys:Double x:Key="SizeBody">16</sys:Double>
+    <sys:Double x:Key="SizeLabel">13</sys:Double>
+    <sys:Double x:Key="SizeResult">14</sys:Double>
+    <sys:Double x:Key="SizeMicro">11</sys:Double>
+
+    <!--
+        Diagonal hatching, marking the one part of the payload that is readable
+        by anyone: the header travels in the clear, though the tag still covers
+        it.
+    -->
+    <DrawingBrush x:Key="Hatch" TileMode="Tile" Stretch="None"
+                  Viewport="0,0,7,7" ViewportUnits="Absolute">
+        <DrawingBrush.Drawing>
+            <GeometryDrawing Geometry="M 0,7 L 7,0">
+                <GeometryDrawing.Pen>
+                    <Pen Brush="#1A6B1A" Thickness="1" />
+                </GeometryDrawing.Pen>
+            </GeometryDrawing>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+
+</ResourceDictionary>

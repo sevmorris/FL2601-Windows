@@ -31,8 +31,10 @@ Requires Windows 10 or later (x64).
 ## Using it
 
 **To encrypt:** enter a passphrase, confirm it in the second field, type or
-paste your message, and press **ENCRYPT**. Copy the result and send it however
-you like. It comes wrapped in a labelled block:
+paste your message, and press **ENCRYPT TEXT**. A meter under the passphrase
+field estimates its entropy as you type, and the confirm field reports
+`[ MATCH ]` once the two agree. Copy the result and send it however you like.
+It comes wrapped in a labelled block:
 
 ```
 -----BEGIN FL2601 MESSAGE-----
@@ -118,19 +120,25 @@ FL2601-Windows/
     ├── App.xaml / App.xaml.cs
     ├── Services/
     │   ├── CipherEngine.cs        PBKDF2 + AES-GCM (matches Swift format)
-    │   └── MessageArmor.cs        PGP-style envelope wrap/unwrap
+    │   ├── MessageArmor.cs        PGP-style envelope wrap/unwrap
+    │   └── PassphraseStrength.cs  Entropy estimate for the strength meter
     ├── ViewModels/
     │   └── CipherViewModel.cs     MVVM, INotifyPropertyChanged
     └── Views/
+        ├── Theme.xaml             Palette, type sizes, hatch brush
+        ├── Components.xaml        Field, button, tab and scrollbar styles
         └── MainWindow.xaml/.cs    Dark terminal UI
 ```
 
 | File | Role |
 | --- | --- |
-| `CipherEngine.cs` | `Rfc2898DeriveBytes` for PBKDF2, `AesGcm` for AES-256-GCM. Builds and parses the binary payload in exactly the same layout as the Swift version. |
+| `CipherEngine.cs` | `Rfc2898DeriveBytes` for PBKDF2, `AesGcm` for AES-256-GCM. Builds and parses the binary payload in exactly the same layout as the Swift version. `Inspect` reads a payload's header without deriving a key, for the payload map. |
 | `MessageArmor.cs` | Wraps base64 in `-----BEGIN FL2601 MESSAGE-----` markers with optional comment lines. On unwrap, strips comments (lines containing `:`), rejoins base64. Bare base64 passes through unchanged. |
-| `CipherViewModel.cs` | Encrypt/decrypt mode toggle, password confirmation, async crypto on a background thread, clipboard copy, status messages. |
-| `MainWindow.xaml` | Dark terminal theme (`#0A0A0A` / `#111111` background, `#33FF33` green accent, Courier New), matching the macOS version's visual style. |
+| `PassphraseStrength.cs` | Character-pool entropy estimate, discounting repetition. An upper bound on typed entropy, not a predictability score — see the file's own caveats. |
+| `CipherViewModel.cs` | Encrypt/decrypt mode toggle, passphrase confirmation, live strength estimate, async crypto on a background thread, clipboard copy, status messages. |
+| `Theme.xaml` | The palette (`#0A0A0A` / `#111111` surfaces, `#33FF33` green accent, Courier New) and type scale, ported from the macOS version's `Theme.swift`. |
+| `Components.xaml` | Control styles: focus-lifting field chrome, filled and outlined buttons, underlined tabs, dark scrollbars, payload-map segments. |
+| `MainWindow.xaml` | Layout only — an inset panel over the window background, everything else drawn from the two resource dictionaries. |
 
 ## Building
 
