@@ -4,7 +4,7 @@
 <p align="center">
   <strong>PBKDF2 + AES-256-GCM, entirely offline</strong>
   <br />
-  <strong>Version:</strong> 1.1.0
+  <strong>Version:</strong> 1.2.0
   <br />
   <a href="https://github.com/sevmorris/FL2601-Windows/releases/latest"><strong>Download Latest (Windows x64)</strong></a>
   ·
